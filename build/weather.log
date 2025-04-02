@@ -1,0 +1,3 @@
+[2025-04-02T07:10:15.283Z] [INFO] 日志文件已创建
+[2025-04-02T07:10:15.286Z] [INFO] Weather服务启动 | 操作系统: Darwin 24.3.0 | Node.js版本: v21.5.0
+[2025-04-02T07:10:15.287Z] [INFO] Weather MCP Server 已启动，使用stdio通信
