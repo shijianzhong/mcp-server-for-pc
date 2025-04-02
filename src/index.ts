@@ -123,8 +123,8 @@ async function makeNWSRequest<T>(url: string): Promise<T | null> {
 
   // Register weather tools
 server.tool(
-    "get-alerts",
-    "Get weather alerts for a state",
+    "get_alerts",
+    "查询天气警报",
     {
       state: z.string().length(2).describe("Two-letter state code (e.g. CA, NY)"),
     },
@@ -175,8 +175,8 @@ server.tool(
   );
   
   server.tool(
-    "get-forecast",
-    "Get weather forecast for a location",
+    "get_forecast",
+    "获取当地天气预报",
     {
       latitude: z.number().min(-90).max(90).describe("Latitude of the location"),
       longitude: z.number().min(-180).max(180).describe("Longitude of the location"),
@@ -362,7 +362,7 @@ server.tool(
 
   // 注册打开浏览器并搜索的工具
   server.tool(
-    "open-browser-search",
+    "open_browser_search",
     "打开浏览器并搜索关键词, 如果提供url，则打开url，否则使用默认搜索引擎",
     {
       url: z.string().url().optional().describe("要打开的网址，如果不提供则使用默认搜索引擎"),
@@ -533,7 +533,7 @@ server.tool(
       console.error("Weather MCP Server running on stdio");
       
       // 记录工具信息以便调试
-      const toolNames = ["get-alerts", "get-forecast", "shutdown_system", "open-browser-search"];
+      const toolNames = ["get_alerts", "get_forecast", "shutdown_system", "open_browser_search"];
       console.error("已注册工具:", toolNames.join(", "));
       
       // 确保进程不会退出，保持监听状态
@@ -542,121 +542,127 @@ server.tool(
       // 直接处理标准输入，用于捕获和处理JSON-RPC请求
       process.stdin.on('data', (buffer) => {
         try {
-          const line = buffer.toString('utf8').trim();
-          if (!line) return;
+          const inputText = buffer.toString('utf8').trim();
+          if (!inputText) return;
           
-          console.error("收到请求:", line);
+          console.error("收到请求:", inputText);
           
-          // 尝试解析请求
-          let request;
-          try {
-            // 尝试将输入作为JSON字符串解析
-            request = JSON.parse(line);
-          } catch (parseError) {
-            console.error("尝试解析字符串失败，检查是否为对象:", parseError);
-            
-            // 如果不是有效的JSON字符串，尝试直接使用（可能是被传递的对象）
+          // 处理可能的多行输入，将输入拆分为多个行并逐行处理
+          const lines = inputText.split(/\r?\n/).filter(line => line.trim());
+          
+          for (const line of lines) {
+            // 尝试解析请求
+            let request;
             try {
-              if (typeof line === 'object') {
-                request = line;
-              } else if (line === '[object Object]') {
-                // 特殊处理客户端发送[object Object]字符串的情况
-                // 构建一个假的请求对象以响应工具列表
-                request = {
-                  jsonrpc: "2.0",
-                  id: 1,
-                  method: "mcp.server.listTools",
-                  params: {}
-                };
-              } else {
-                throw new Error("无法识别的请求格式");
-              }
-            } catch (objectError) {
-              console.error("无法处理请求:", objectError);
-              // 发送解析错误响应
-              console.log(JSON.stringify({
-                jsonrpc: "2.0",
-                id: null,
-                error: {
-                  code: -32700,
-                  message: "Parse error"
+              // 尝试将输入作为JSON字符串解析
+              request = JSON.parse(line);
+            } catch (parseError) {
+              console.error("尝试解析字符串失败，检查是否为对象:", parseError);
+              
+              // 如果不是有效的JSON字符串，尝试直接使用（可能是被传递的对象）
+              try {
+                if (typeof line === 'object') {
+                  request = line;
+                } else if (line === '[object Object]') {
+                  // 特殊处理客户端发送[object Object]字符串的情况
+                  // 构建一个假的请求对象以响应工具列表
+                  request = {
+                    jsonrpc: "2.0",
+                    id: 1,
+                    method: "mcp.server.listTools",
+                    params: {}
+                  };
+                } else {
+                  throw new Error("无法识别的请求格式");
                 }
-              }));
-              return;
+              } catch (objectError) {
+                console.error("无法处理请求:", objectError);
+                // 发送解析错误响应
+                console.log(JSON.stringify({
+                  jsonrpc: "2.0",
+                  id: null,
+                  error: {
+                    code: -32700,
+                    message: "Parse error"
+                  }
+                }));
+                continue; // 继续处理下一行
+              }
             }
-          }
-          
-          // 正常处理请求对象
-          // 特别处理工具列表请求
-          if (request.method && 
-             (request.method === 'mcp.server.listTools' || 
-              request.method === 'listTools' || 
-              request.method === 'mcp.listTools')) {
             
-            console.error("处理工具列表请求");
-            
-            // 构建工具列表响应
-            const response = {
-              jsonrpc: "2.0",
-              id: request.id,
-              result: {
-                tools: [
-                  {
-                    name: "get-alerts",
-                    description: "Get weather alerts for a state",
-                    inputSchema: {
-                      type: "object",
-                      properties: {
-                        state: { type: "string", description: "Two-letter state code (e.g. CA, NY)" }
-                      },
-                      required: ["state"]
-                    }
-                  },
-                  {
-                    name: "get-forecast",
-                    description: "Get weather forecast for a location",
-                    inputSchema: {
-                      type: "object",
-                      properties: {
-                        latitude: { type: "number", description: "Latitude of the location" },
-                        longitude: { type: "number", description: "Longitude of the location" }
-                      },
-                      required: ["latitude", "longitude"]
-                    }
-                  },
-                  {
-                    name: "shutdown_system",
-                    description: "Shutdown or restart the system (Windows or Mac)",
-                    inputSchema: {
-                      type: "object",
-                      properties: {
-                        restart: { type: "boolean", description: "True to restart, false to shutdown" },
-                        delay: { type: "number", description: "Delay in seconds before shutdown" },
-                        force: { type: "boolean", description: "Force shutdown without confirmation" }
+            // 正常处理请求对象
+            // 特别处理工具列表请求
+            if (request.method && 
+               (request.method === 'mcp.server.listTools' || 
+                request.method === 'listTools' || 
+                request.method === 'mcp.listTools' ||
+                request.method === 'tools/list')) {
+              
+              console.error("处理工具列表请求");
+              
+              // 构建工具列表响应
+              const response = {
+                jsonrpc: "2.0",
+                id: request.id,
+                result: {
+                  tools: [
+                    {
+                      name: "get_alerts",
+                      description: "Get weather alerts for a state",
+                      inputSchema: {
+                        type: "object",
+                        properties: {
+                          state: { type: "string", description: "Two-letter state code (e.g. CA, NY)" }
+                        },
+                        required: ["state"]
+                      }
+                    },
+                    {
+                      name: "get_forecast",
+                      description: "Get weather forecast for a location",
+                      inputSchema: {
+                        type: "object",
+                        properties: {
+                          latitude: { type: "number", description: "Latitude of the location" },
+                          longitude: { type: "number", description: "Longitude of the location" }
+                        },
+                        required: ["latitude", "longitude"]
+                      }
+                    },
+                    {
+                      name: "shutdown_system",
+                      description: "Shutdown or restart the system (Windows or Mac)",
+                      inputSchema: {
+                        type: "object",
+                        properties: {
+                          restart: { type: "boolean", description: "True to restart, false to shutdown" },
+                          delay: { type: "number", description: "Delay in seconds before shutdown" },
+                          force: { type: "boolean", description: "Force shutdown without confirmation" }
+                        }
+                      }
+                    },
+                    {
+                      name: "open_browser_search",
+                      description: "打开浏览器并搜索关键词",
+                      inputSchema: {
+                        type: "object",
+                        properties: {
+                          url: { type: "string", description: "要打开的网址，如果不提供则使用默认搜索引擎" },
+                          searchTerm: { type: "string", description: "要搜索的关键词" },
+                          browser: { type: "string", description: "要使用的浏览器" },
+                          autoFindUrl: { type: "boolean", description: "如果为true，将尝试从搜索词中智能推断网址" }
+                        },
+                        required: ["searchTerm"]
                       }
                     }
-                  },
-                  {
-                    name: "open-browser-search",
-                    description: "打开浏览器并搜索关键词",
-                    inputSchema: {
-                      type: "object",
-                      properties: {
-                        url: { type: "string", description: "要打开的网址，如果不提供则使用默认搜索引擎" },
-                        searchTerm: { type: "string", description: "要搜索的关键词" },
-                        browser: { type: "string", description: "要使用的浏览器" },
-                        autoFindUrl: { type: "boolean", description: "如果为true，将尝试从搜索词中智能推断网址" }
-                      },
-                      required: ["searchTerm"]
-                    }
-                  }
-                ]
-              }
-            };
-            
-            // 输出响应
-            console.log(JSON.stringify(response));
-            return;
+                  ]
+                }
+              };
+              
+              // 输出响应
+              console.log(JSON.stringify(response));
+              return;
+            }
           }
         } catch (e) {
           console.error("处理请求时出错:", e);
