@@ -47,7 +47,7 @@ function initializeLogging(): void {
 
 // Create server instance
 const server = new McpServer({
-  name: "weather123",
+  name: "weather",
   version: "1.0.0",
 });
 
@@ -386,11 +386,20 @@ server.tool(
           url = possibleUrl;
         } else {
           // 如果无法推断出网址，则使用默认搜索引擎
-          url = "https://www.baidu.com/search?q=";
+          // 修正：百度的正确搜索URL格式是 s?wd= 而不是 search?q=
+          // 同时提供备用搜索引擎，避免IP封禁问题
+          const searchEngines = [
+            "https://www.bing.com/search?q=",  // 必应
+            "https://www.baidu.com/s?wd=",     // 百度(正确格式)
+            "https://www.sogou.com/web?query=" // 搜狗
+          ];
+          // 默认使用必应作为第一选择
+          url = searchEngines[0];
+          logMessage(`使用备用搜索引擎: ${url}`, "INFO");
         }
       } else if (!url) {
         // 如果没有提供URL且不自动查找，使用默认搜索引擎
-        url = "https://www.baidu.com/search?q=";
+        url = "https://www.bing.com/search?q=";
       }
       
       // 将搜索词编码为URL安全的形式
@@ -529,158 +538,12 @@ server.tool(
       console.error("连接到StdioServerTransport成功");
       logMessage("Weather MCP Server 已启动，使用stdio通信", "INFO");
       
-      // 添加详细的调试信息
-      console.error("Weather MCP Server running on stdio");
-      
       // 记录工具信息以便调试
       const toolNames = ["get_alerts", "get_forecast", "shutdown_system", "open_browser_search"];
       console.error("已注册工具:", toolNames.join(", "));
       
       // 确保进程不会退出，保持监听状态
       process.stdin.resume();
-      
-      // 直接处理标准输入，用于捕获和处理JSON-RPC请求
-      process.stdin.on('data', (buffer) => {
-        try {
-          const inputText = buffer.toString('utf8').trim();
-          if (!inputText) return;
-          
-          console.error("收到请求:", inputText);
-          
-          // 处理可能的多行输入，将输入拆分为多个行并逐行处理
-          const lines = inputText.split(/\r?\n/).filter(line => line.trim());
-          
-          for (const line of lines) {
-            // 尝试解析请求
-            let request;
-            try {
-              // 尝试将输入作为JSON字符串解析
-              request = JSON.parse(line);
-            } catch (parseError) {
-              console.error("尝试解析字符串失败，检查是否为对象:", parseError);
-              
-              // 如果不是有效的JSON字符串，尝试直接使用（可能是被传递的对象）
-              try {
-                if (typeof line === 'object') {
-                  request = line;
-                } else if (line === '[object Object]') {
-                  // 特殊处理客户端发送[object Object]字符串的情况
-                  // 构建一个假的请求对象以响应工具列表
-                  request = {
-                    jsonrpc: "2.0",
-                    id: 1,
-                    method: "mcp.server.listTools",
-                    params: {}
-                  };
-                } else {
-                  throw new Error("无法识别的请求格式");
-                }
-              } catch (objectError) {
-                console.error("无法处理请求:", objectError);
-                // 发送解析错误响应
-                console.log(JSON.stringify({
-                  jsonrpc: "2.0",
-                  id: null,
-                  error: {
-                    code: -32700,
-                    message: "Parse error"
-                  }
-                }));
-                continue; // 继续处理下一行
-              }
-            }
-            
-            // 正常处理请求对象
-            // 特别处理工具列表请求
-            if (request.method && 
-               (request.method === 'mcp.server.listTools' || 
-                request.method === 'listTools' || 
-                request.method === 'mcp.listTools' ||
-                request.method === 'tools/list')) {
-              
-              console.error("处理工具列表请求");
-              
-              // 构建工具列表响应
-              const response = {
-                jsonrpc: "2.0",
-                id: request.id,
-                result: {
-                  tools: [
-                    {
-                      name: "get_alerts",
-                      description: "Get weather alerts for a state",
-                      inputSchema: {
-                        type: "object",
-                        properties: {
-                          state: { type: "string", description: "Two-letter state code (e.g. CA, NY)" }
-                        },
-                        required: ["state"]
-                      }
-                    },
-                    {
-                      name: "get_forecast",
-                      description: "Get weather forecast for a location",
-                      inputSchema: {
-                        type: "object",
-                        properties: {
-                          latitude: { type: "number", description: "Latitude of the location" },
-                          longitude: { type: "number", description: "Longitude of the location" }
-                        },
-                        required: ["latitude", "longitude"]
-                      }
-                    },
-                    {
-                      name: "shutdown_system",
-                      description: "Shutdown or restart the system (Windows or Mac)",
-                      inputSchema: {
-                        type: "object",
-                        properties: {
-                          restart: { type: "boolean", description: "True to restart, false to shutdown" },
-                          delay: { type: "number", description: "Delay in seconds before shutdown" },
-                          force: { type: "boolean", description: "Force shutdown without confirmation" }
-                        }
-                      }
-                    },
-                    {
-                      name: "open_browser_search",
-                      description: "打开浏览器并搜索关键词",
-                      inputSchema: {
-                        type: "object",
-                        properties: {
-                          url: { type: "string", description: "要打开的网址，如果不提供则使用默认搜索引擎" },
-                          searchTerm: { type: "string", description: "要搜索的关键词" },
-                          browser: { type: "string", description: "要使用的浏览器" },
-                          autoFindUrl: { type: "boolean", description: "如果为true，将尝试从搜索词中智能推断网址" }
-                        },
-                        required: ["searchTerm"]
-                      }
-                    }
-                  ]
-                }
-              };
-              
-              // 输出响应
-              console.log(JSON.stringify(response));
-              return;
-            }
-          }
-        } catch (e) {
-          console.error("处理请求时出错:", e);
-          // 发送内部错误响应
-          try {
-            console.log(JSON.stringify({
-              jsonrpc: "2.0",
-              id: null,
-              error: {
-                code: -32603,
-                message: "Internal error"
-              }
-            }));
-          } catch (logError) {
-            console.error("发送错误响应失败:", logError);
-          }
-        }
-      });
       
       // 添加错误处理
       process.on('uncaughtException', (err) => {
@@ -722,12 +585,12 @@ async function intelligentUrlFinder(searchTerm: string): Promise<string | null> 
   
   // 步骤2: 检查是否包含常见的网站名称
   const commonWebsites: {[key: string]: string} = {
-    '百度': 'https://www.baidu.com/s',
-    'baidu': 'https://www.baidu.com/s',
+    '百度': 'https://www.baidu.com/s?wd=',
+    'baidu': 'https://www.baidu.com/s?wd=',
     '谷歌': 'https://www.google.com/search?q=',
     'google': 'https://www.google.com/search?q=',
-    '必应': 'https://www.bing.com/search',
-    'bing': 'https://www.bing.com/search',
+    '必应': 'https://www.bing.com/search?q=',
+    'bing': 'https://www.bing.com/search?q=',
     '淘宝': 'https://s.taobao.com/search?q=',
     'taobao': 'https://s.taobao.com/search?q=',
     '京东': 'https://search.jd.com/Search?keyword=',
@@ -755,7 +618,8 @@ async function intelligentUrlFinder(searchTerm: string): Promise<string | null> 
     '脸书': 'https://www.facebook.com/search/top?q=',
     'instagram': 'https://www.instagram.com/explore/tags/',
     'ins': 'https://www.instagram.com/explore/tags/',
-    '微信': 'https://weixin.sogou.com/weixin?type=2&query='
+    '微信': 'https://weixin.sogou.com/weixin?type=2&query=',
+    '搜狗': 'https://www.sogou.com/web?query='
   };
   
   // 检查搜索词是否包含常见网站名称
