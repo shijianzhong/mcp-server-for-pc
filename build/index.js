@@ -220,15 +220,21 @@ server.tool("shutdown_system", "Shutdown or restart the system (Windows or Mac) 
     else if (platform === 'darwin') {
         // macOS系统关机命令
         if (restart) {
-            cmd = 'osascript -e \'tell app "System Events" to restart';
+            if (force) {
+                cmd = 'osascript -e \'tell app "System Events" to restart with force\'';
+            }
+            else {
+                cmd = 'osascript -e \'tell app "System Events" to restart\'';
+            }
         }
         else {
-            cmd = 'osascript -e \'tell app "System Events" to shut down';
+            if (force) {
+                cmd = 'osascript -e \'tell app "System Events" to shut down with force\'';
+            }
+            else {
+                cmd = 'osascript -e \'tell app "System Events" to shut down\'';
+            }
         }
-        if (force) {
-            cmd += ' now';
-        }
-        cmd += '\'';
         // 如果有延迟，需要在执行前等待
         if (delay > 0) {
             await new Promise(resolve => setTimeout(resolve, delay * 1000));
@@ -430,6 +436,101 @@ server.tool("open_browser_search", "打开浏览器并搜索关键词, 如果提
         });
     });
 });
+// 添加截屏功能
+server.tool("capture_screenshot", "截取屏幕并保存为文件", {
+    savePath: z.string().optional().describe("保存截图的路径，如果不提供则使用当前目录"),
+}, async ({ savePath }) => {
+    const timestamp = new Date().getTime();
+    const platform = os.platform();
+    const homeDir = os.homedir();
+    // 如果未提供保存路径，则使用桌面或当前目录
+    const defaultDir = platform === 'darwin' || platform === 'win32'
+        ? path.join(homeDir, 'Desktop')
+        : process.cwd();
+    const targetDir = savePath || defaultDir;
+    // 确保目录存在
+    if (!fs.existsSync(targetDir)) {
+        try {
+            fs.mkdirSync(targetDir, { recursive: true });
+        }
+        catch (error) {
+            logMessage(`创建截图保存目录失败: ${error}`, "ERROR");
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: `创建目录失败: ${error}`
+                    }
+                ]
+            };
+        }
+    }
+    const filename = `screenshot_${timestamp}.png`;
+    const filePath = path.join(targetDir, filename);
+    let cmd = '';
+    logMessage(`正在截取屏幕: 平台 ${platform}, 保存至 ${filePath}`, "INFO");
+    if (platform === 'darwin') {
+        // macOS使用screencapture命令
+        cmd = `screencapture -x "${filePath}"`;
+    }
+    else if (platform === 'win32') {
+        // Windows可以使用PowerShell的截图功能
+        cmd = `powershell -command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('%{PRTSC}'); Start-Sleep -Milliseconds 250; $img = [System.Windows.Forms.Clipboard]::GetImage(); $img.Save('${filePath}');"`;
+    }
+    else if (platform === 'linux') {
+        // Linux可以使用gnome-screenshot或import(ImageMagick)
+        cmd = `if command -v gnome-screenshot &> /dev/null; then gnome-screenshot -f "${filePath}"; elif command -v import &> /dev/null; then import -window root "${filePath}"; else echo "找不到截图工具"; fi`;
+    }
+    else {
+        return {
+            content: [
+                {
+                    type: "text",
+                    text: `不支持的操作系统: ${platform}`
+                }
+            ]
+        };
+    }
+    return new Promise((resolve) => {
+        exec(cmd, (error, stdout, stderr) => {
+            if (error) {
+                logMessage(`截图失败: ${error.message}`, "ERROR");
+                resolve({
+                    content: [
+                        {
+                            type: "text",
+                            text: `截图失败: ${error.message}`
+                        }
+                    ]
+                });
+                return;
+            }
+            // 检查文件是否成功创建
+            if (fs.existsSync(filePath)) {
+                logMessage(`截图成功: ${filePath}`, "INFO");
+                resolve({
+                    content: [
+                        {
+                            type: "text",
+                            text: `截图已保存: ${filePath}`
+                        }
+                    ]
+                });
+            }
+            else {
+                logMessage(`截图命令执行成功，但找不到文件: ${filePath}`, "ERROR");
+                resolve({
+                    content: [
+                        {
+                            type: "text",
+                            text: `截图命令执行成功，但找不到文件: ${filePath}`
+                        }
+                    ]
+                });
+            }
+        });
+    });
+});
 async function main() {
     // 初始化日志系统
     initializeLogging();
@@ -441,7 +542,7 @@ async function main() {
         console.error("连接到StdioServerTransport成功");
         logMessage("Weather MCP Server 已启动，使用stdio通信", "INFO");
         // 记录工具信息以便调试
-        const toolNames = ["get_alerts", "get_forecast", "shutdown_system", "open_browser_search"];
+        const toolNames = ["get_alerts", "get_forecast", "shutdown_system", "open_browser_search", "capture_screenshot"];
         console.error("已注册工具:", toolNames.join(", "));
         // 确保进程不会退出，保持监听状态
         process.stdin.resume();
