@@ -1,4 +1,4 @@
-# Weather 天气应用
+# 个人PC助手，MCP server
 
 这是一个基于 Model Context Protocol (MCP) 的天气信息查询工具，能够提供天气预报、天气警报和其他实用工具功能。
 
