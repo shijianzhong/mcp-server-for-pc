@@ -299,10 +299,12 @@ server.tool("open_browser_search", "打开浏览器并搜索关键词, 如果提
     logMessage(`autoFindUrl: ${autoFindUrl}`, "INFO");
     const platform = os.platform();
     let cmd = '';
+    logMessage(`!url && autoFindUrl: ${!url && autoFindUrl}`, "INFO");
     // 检查是否需要智能查找网址
     if (!url && autoFindUrl) {
         // 尝试从搜索词中推断网址
         const possibleUrl = await intelligentUrlFinder(searchTerm);
+        logMessage(`possibleUrl: ${possibleUrl}`, "INFO");
         if (possibleUrl) {
             url = possibleUrl;
         }
@@ -572,6 +574,7 @@ async function intelligentUrlFinder(searchTerm) {
     logMessage(`尝试为搜索词查找URL: "${searchTerm}"`, "INFO");
     // 步骤1: 检查搜索词是否已经是一个网址
     if (searchTerm.match(/^(https?:\/\/)?[a-zA-Z0-9][-a-zA-Z0-9]*(\.[a-zA-Z0-9][-a-zA-Z0-9]*)+/)) {
+        logMessage(`搜索词已经是网址: "${searchTerm}"`, "INFO");
         // 如果是网址但没有协议，添加https://
         if (!searchTerm.startsWith('http://') && !searchTerm.startsWith('https://')) {
             const url = 'https://' + searchTerm;
@@ -621,11 +624,13 @@ async function intelligentUrlFinder(searchTerm) {
     };
     // 检查搜索词是否包含常见网站名称
     for (const [site, url] of Object.entries(commonWebsites)) {
+        logMessage(`检查搜索词是否包含常见网站名称: ${site}`, "INFO");
         if (searchTerm.toLowerCase().startsWith(site.toLowerCase() + ' ') ||
             searchTerm.toLowerCase().startsWith('在' + site.toLowerCase() + '搜索') ||
             searchTerm.toLowerCase().startsWith('在' + site.toLowerCase() + '上搜索') ||
             searchTerm.toLowerCase().startsWith('search ' + site.toLowerCase())) {
             // 移除网站名称，保留搜索词
+            logMessage(`搜索词包含常见网站名称: ${site}`, "INFO");
             return url;
         }
     }

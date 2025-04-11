@@ -10,7 +10,7 @@
   },
   "type": "module",
   "bin": {
-    "pc-mcp": "./build/index.js"
+    "pc-mcp": "build/index.js"
   },
   "files": [
     "build"
