@@ -1,4 +1,5 @@
-# MCP Server for PC
+# 个人PC助手，MCP Server for PC
+
 
 这是一个基于 Model Context Protocol (MCP) 的个人PC操作及其他实用工具功能。
 
