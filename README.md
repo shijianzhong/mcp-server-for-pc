@@ -1,6 +1,6 @@
-# Weather 天气应用
+# MCP Server for PC
 
-这是一个基于 Model Context Protocol (MCP) 的天气信息查询工具，能够提供天气预报、天气警报和其他实用工具功能。
+这是一个基于 Model Context Protocol (MCP) 的个人PC操作及其他实用工具功能。
 
 该项目当前主要是作为smart-pet项目的演示验证服务
 
@@ -44,21 +44,21 @@ npm run build
 
 ```bash
 # 作为命令行工具使用
-weather
+mcp-server-for-pc
 ```
 
 ## 可用的工具命令
 
 1. **获取天气警报**
    ```
-   mcp_weather_get_alerts
+   get_alerts
    ```
    参数:
    - `state`: 两字母州代码 (例如 CA, NY)
 
 2. **获取天气预报**
    ```
-   mcp_weather_get_forecast
+   get_forecast
    ```
    参数:
    - `latitude`: 位置的纬度 (-90 到 90)
@@ -66,7 +66,7 @@ weather
 
 3. **系统关机/重启**
    ```
-   mcp_weather_shutdown_system
+   shutdown_system
    ```
    参数:
    - `delay`: 关机前延迟（秒）
@@ -75,7 +75,7 @@ weather
 
 4. **浏览器搜索**
    ```
-   mcp_weather_open_browser_search
+   open_browser_search
    ```
    参数:
    - `searchTerm`: 要搜索的关键词
@@ -85,7 +85,7 @@ weather
 
 5. **截取屏幕**
    ```
-   mcp_weather_capture_screenshot
+   capture_screenshot
    ```
    参数:
    - `savePath`: (可选) 保存截图的路径
@@ -96,7 +96,7 @@ weather
 
 ## 日志系统
 
-应用程序会自动在当前工作目录创建 `weather.log` 文件，记录所有操作和错误信息，方便故障排查。
+应用程序会自动在当前工作目录创建 `mcp-server-for-pc.log` 文件，记录所有操作和错误信息，方便故障排查。
 
 ## 系统要求
 

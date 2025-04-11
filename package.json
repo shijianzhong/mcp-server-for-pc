@@ -1,5 +1,5 @@
 {
-  "name": "weather",
+  "name": "mcp-server-for-pc",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
   },
   "type": "module",
   "bin": {
-    "weather": "./build/index.js"
+    "mcp-server-for-pc": "./build/index.js"
   },
   "files": [
     "build"
