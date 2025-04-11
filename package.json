@@ -1,22 +1,31 @@
 {
-  "name": "mcp-server-for-pc",
+  "name": "pc-mcp",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Model Context Protocol server for PC weather data",
+  "main": "build/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && chmod 755 build/index.js"
+    "build": "tsc && chmod 755 build/index.js",
+    "prepublishOnly": "npm run build"
   },
   "type": "module",
   "bin": {
-    "mcp-server-for-pc": "./build/index.js"
+    "pc-mcp": "./build/index.js"
   },
   "files": [
     "build"
   ],
-  "keywords": [],
+  "keywords": [
+    "weather",
+    "cli",
+    "forecast",
+    "alerts",
+    "pc",
+    "mcp",
+    "model-context-protocol"
+  ],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.8.0",
     "zod": "^3.24.2"
@@ -24,5 +33,8 @@
   "devDependencies": {
     "@types/node": "^22.13.10",
     "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

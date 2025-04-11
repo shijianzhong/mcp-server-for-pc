@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -34,7 +33,7 @@ function initializeLogging() {
         // 写入启动日志
         const osInfo = `${os.type()} ${os.release()}`;
         const nodeVersion = process.version;
-        const startMessage = `Weather服务启动 | 操作系统: ${osInfo} | Node.js版本: ${nodeVersion}`;
+        const startMessage = `PC MCP Server 服务启动 | 操作系统: ${osInfo} | Node.js版本: ${nodeVersion}`;
         logMessage(startMessage, 'INFO');
     }
     catch (error) {
