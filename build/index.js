@@ -9,7 +9,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 const NWS_API_BASE = "https://api.weather.gov";
 const USER_AGENT = "weather-app/1.0";
-const LOG_FILE_PATH = path.join(process.cwd(), 'weather.log');
+const LOG_FILE_PATH = path.join(process.cwd(), 'mcp-server-for-pc.log');
 // 创建日志记录函数
 function logMessage(message, level = 'INFO') {
     const timestamp = new Date().toISOString();
@@ -43,7 +43,7 @@ function initializeLogging() {
 }
 // Create server instance
 const server = new McpServer({
-    name: "weather",
+    name: "mcp-server-for-pc",
     version: "1.0.0",
 });
 // Helper function for making NWS API requests
@@ -540,7 +540,7 @@ async function main() {
     try {
         await server.connect(transport);
         console.error("连接到StdioServerTransport成功");
-        logMessage("Weather MCP Server 已启动，使用stdio通信", "INFO");
+        logMessage("PC MCP Server 已启动，使用stdio通信", "INFO");
         // 记录工具信息以便调试
         const toolNames = ["get_alerts", "get_forecast", "shutdown_system", "open_browser_search", "capture_screenshot"];
         console.error("已注册工具:", toolNames.join(", "));

@@ -38,7 +38,7 @@ function initializeLogging(): void {
     // 写入启动日志
     const osInfo = `${os.type()} ${os.release()}`;
     const nodeVersion = process.version;
-    const startMessage = `Weather服务启动 | 操作系统: ${osInfo} | Node.js版本: ${nodeVersion}`;
+    const startMessage = `PC MCP Server 服务启动 | 操作系统: ${osInfo} | Node.js版本: ${nodeVersion}`;
     logMessage(startMessage, 'INFO');
   } catch (error) {
     console.error(`初始化日志系统失败: ${error}`);
