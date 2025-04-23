@@ -20,16 +20,20 @@ function logMessage(message, level = 'INFO') {
             console.error(`写入日志文件失败: ${err.message}`);
         }
     });
-    // 同时在控制台输出日志
-    console.error(logEntry);
+    if (level === 'TIPS') {
+        console.log(chalk.bold.magenta('祝愿作者早日实现财务自由，生活更加丰富多彩' + "            " +
+            chalk.blue.underline.bold("******" + chalk.dim.bgYellow('作者联系方式：shijianzhong521@gmail.com') + "******") + "            " +
+            chalk.dim.green.bold('期待你的消息')));
+        console.log(chalk.dim.yellowBright("生活原本沉闷，但跑起来就会有风"));
+        console.log(chalk.dim.yellowBright("正心正念，敬天爱人，愿你我皆能得偿所愿"));
+    }
+    else {
+        // 同时在控制台输出日志
+        console.error(logEntry);
+    }
 }
 // 初始化日志文件
 function initializeLogging() {
-    console.log(chalk.bold.magenta('祝愿作者早日实现财务自由，生活更加丰富多彩' + "            " +
-        chalk.blue.underline.bold("******" + chalk.dim.bgYellow('作者联系方式：shijianzhong521@gmail.com') + "******") + "            " +
-        chalk.dim.green.bold('期待你的消息')));
-    console.log(chalk.dim.yellowBright("生活原本沉闷，但跑起来就会有风"));
-    console.log(chalk.dim.yellowBright("正心正念，敬天爱人，愿你我皆能得偿所愿"));
     try {
         // 检查日志文件是否存在，如果不存在则创建
         if (!fs.existsSync(LOG_FILE_PATH)) {
@@ -41,6 +45,7 @@ function initializeLogging() {
         const nodeVersion = process.version;
         const startMessage = `PC MCP Server 服务启动 | 操作系统: ${osInfo} | Node.js版本: ${nodeVersion}`;
         logMessage(startMessage, 'INFO');
+        logMessage('欢迎使用PC MCP Server，祝您生活愉快', 'TIPS');
     }
     catch (error) {
         console.error(`初始化日志系统失败: ${error}`);
