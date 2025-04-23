@@ -27,15 +27,15 @@ function logMessage(message: string, level: 'INFO' | 'ERROR' | 'WARNING' | 'TIPS
 
 
   if (level === 'TIPS') {
-    console.log(chalk.bold.magenta(
+    console.error(chalk.bold.magenta(
       '祝愿作者早日实现财务自由，生活更加丰富多彩' + "            " +
       chalk.blue.underline.bold(
         "******" + chalk.dim.bgYellow('作者联系方式：shijianzhong521@gmail.com') + "******"
       ) + "            " +
       chalk.dim.green.bold('期待你的消息')
     ));
-    console.log(chalk.dim.yellowBright("生活原本沉闷，但跑起来就会有风"));
-    console.log(chalk.dim.yellowBright("正心正念，敬天爱人，愿你我皆能得偿所愿"));
+    console.error(chalk.dim.yellowBright("生活原本沉闷，但跑起来就会有风"));
+    console.error(chalk.dim.yellowBright("正心正念，敬天爱人，愿你我皆能得偿所愿"));
   } else {
     // 同时在控制台输出日志
     console.error(logEntry);
@@ -383,15 +383,15 @@ server.tool(
 // 注册打开浏览器并搜索的工具
 server.tool(
   "open_browser_search",
-  "打开浏览器并搜索关键词, 如果提供url，则打开url，否则使用默认搜索引擎",
+  "打开浏览器并搜索关键词, 如果提供url，则打开url，否则使用默认搜索引擎，使用keywords参数指定要搜索的关键词",
   {
     url: z.string().url().optional().describe("要打开的网址，如果不提供则使用默认搜索引擎"),
-    searchTerm: z.string().describe("要搜索的关键词"),
+    keywords: z.string().describe("要搜索的关键词"),
     browser: z.enum(["default", "chrome", "firefox", "safari", "edge"]).optional().describe("要使用的浏览器"),
     autoFindUrl: z.boolean().optional().describe("如果为true，将尝试从搜索词中智能推断网址")
   },
-  async ({ url, searchTerm, browser = "default", autoFindUrl = true }) => {
-    logMessage(`打开浏览器并搜索关键词: ${searchTerm}`, "INFO");
+  async ({ url, keywords = "", browser = "default", autoFindUrl = true }) => {
+    logMessage(`打开浏览器并搜索关键词: ${keywords}`, "INFO");
     logMessage(`url: ${url}`, "INFO");
     logMessage(`browser: ${browser}`, "INFO");
     logMessage(`autoFindUrl: ${autoFindUrl}`, "INFO");
@@ -401,7 +401,7 @@ server.tool(
     // 检查是否需要智能查找网址
     if (!url && autoFindUrl) {
       // 尝试从搜索词中推断网址
-      const possibleUrl = await intelligentUrlFinder(searchTerm);
+      const possibleUrl = await intelligentUrlFinder(keywords);
       logMessage(`possibleUrl: ${possibleUrl}`, "INFO");
       if (possibleUrl) {
         url = possibleUrl;
@@ -424,7 +424,7 @@ server.tool(
     }
 
     // 将搜索词编码为URL安全的形式
-    const encodedSearchTerm = encodeURIComponent(searchTerm);
+    const encodedSearchTerm = encodeURIComponent(keywords);
 
     // 如果URL看起来像是一个网站域名而不是完整URL，则自动添加https://
     if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
@@ -536,7 +536,7 @@ server.tool(
           content: [
             {
               type: "text",
-              text: `已在${browser === "default" ? "默认浏览器" : browser}中打开网址并搜索"${searchTerm}"`
+              text: `已在${browser === "default" ? "默认浏览器" : browser}中打开网址并搜索"${keywords}"`
             }
           ]
         });
@@ -724,22 +724,22 @@ main().catch((error) => {
 
 /**
  * 智能网址查找器 - 尝试将用户的搜索词转换为合适的网址
- * @param searchTerm 用户的搜索词
+ * @param keywords 用户的搜索词
  * @returns 可能的网址或null
  */
-async function intelligentUrlFinder(searchTerm: string): Promise<string | null> {
-  logMessage(`尝试为搜索词查找URL: "${searchTerm}"`, "INFO");
+async function intelligentUrlFinder(keywords: string): Promise<string | null> {
+  logMessage(`尝试为搜索词查找URL: "${keywords}"`, "INFO");
   // 步骤1: 检查搜索词是否已经是一个网址
-  if (searchTerm.match(/^(https?:\/\/)?[a-zA-Z0-9][-a-zA-Z0-9]*(\.[a-zA-Z0-9][-a-zA-Z0-9]*)+/)) {
-    logMessage(`搜索词已经是网址: "${searchTerm}"`, "INFO");
+  if (keywords.match(/^(https?:\/\/)?[a-zA-Z0-9][-a-zA-Z0-9]*(\.[a-zA-Z0-9][-a-zA-Z0-9]*)+/)) {
+    logMessage(`搜索词已经是网址: "${keywords}"`, "INFO");
     // 如果是网址但没有协议，添加https://
-    if (!searchTerm.startsWith('http://') && !searchTerm.startsWith('https://')) {
-      const url = 'https://' + searchTerm;
+    if (!keywords.startsWith('http://') && !keywords.startsWith('https://')) {
+      const url = 'https://' + keywords;
       logMessage(`已将搜索词转换为URL: "${url}"`, "INFO");
       return url;
     }
-    logMessage(`搜索词已经是URL: "${searchTerm}"`, "INFO");
-    return searchTerm;
+    logMessage(`搜索词已经是URL: "${keywords}"`, "INFO");
+    return keywords;
   }
 
   // 步骤2: 检查是否包含常见的网站名称
@@ -784,10 +784,10 @@ async function intelligentUrlFinder(searchTerm: string): Promise<string | null> 
   // 检查搜索词是否包含常见网站名称
   for (const [site, url] of Object.entries(commonWebsites)) {
     logMessage(`检查搜索词是否包含常见网站名称: ${site}`, "INFO");
-    if (searchTerm.toLowerCase().startsWith(site.toLowerCase() + ' ') ||
-      searchTerm.toLowerCase().startsWith('在' + site.toLowerCase() + '搜索') ||
-      searchTerm.toLowerCase().startsWith('在' + site.toLowerCase() + '上搜索') ||
-      searchTerm.toLowerCase().startsWith('search ' + site.toLowerCase())) {
+    if (keywords.toLowerCase().startsWith(site.toLowerCase() + ' ') ||
+      keywords.toLowerCase().startsWith('在' + site.toLowerCase() + '搜索') ||
+      keywords.toLowerCase().startsWith('在' + site.toLowerCase() + '上搜索') ||
+      keywords.toLowerCase().startsWith('search ' + site.toLowerCase())) {
       // 移除网站名称，保留搜索词
       logMessage(`搜索词包含常见网站名称: ${site}`, "INFO");
       return url;
@@ -795,7 +795,7 @@ async function intelligentUrlFinder(searchTerm: string): Promise<string | null> 
   }
 
   // 步骤3: 尝试猜测搜索词中是否包含网站域名
-  const words = searchTerm.split(' ');
+  const words = keywords.split(' ');
   for (const word of words) {
     // 检查是否看起来像域名（包含.com, .cn, .org等）
     if (word.match(/\.(com|cn|net|org|edu|gov|io|co|me|tv|app|xyz|site|online|shop|store|tech|ai)$/i)) {

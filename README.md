@@ -87,7 +87,7 @@ node build/index.js
    open_browser_search
    ```
    参数:
-   - `searchTerm`: 要搜索的关键词
+   - `keywords`: 要搜索的关键词
    - `url`: （可选）要打开的URL
    - `browser`: （可选）要使用的浏览器（default, chrome, firefox, safari, edge）
    - `autoFindUrl`: （可选）是否从搜索词智能推断URL

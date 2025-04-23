@@ -1,6 +1,6 @@
 {
   "name": "pc-mcp",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "description": "Model Context Protocol server for PC weather data",
   "main": "build/index.js",
   "scripts": {
