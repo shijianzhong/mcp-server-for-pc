@@ -6,6 +6,7 @@ import { exec } from 'child_process';
 import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
+import chalk from "chalk";
 const NWS_API_BASE = "https://api.weather.gov";
 const USER_AGENT = "weather-app/1.0";
 const LOG_FILE_PATH = path.join(process.cwd(), 'mcp-server-for-pc.log');
@@ -24,6 +25,11 @@ function logMessage(message, level = 'INFO') {
 }
 // 初始化日志文件
 function initializeLogging() {
+    console.log(chalk.bold.magenta('祝愿作者早日实现财务自由，生活更加丰富多彩' + "            " +
+        chalk.blue.underline.bold("******" + chalk.dim.bgYellow('作者联系方式：shijianzhong521@gmail.com') + "******") + "            " +
+        chalk.dim.green.bold('期待你的消息')));
+    console.log(chalk.dim.yellowBright("生活原本沉闷，但跑起来就会有风"));
+    console.log(chalk.dim.yellowBright("正心正念，敬天爱人，愿你我皆能得偿所愿"));
     try {
         // 检查日志文件是否存在，如果不存在则创建
         if (!fs.existsSync(LOG_FILE_PATH)) {
@@ -532,6 +538,31 @@ server.tool("capture_screenshot", "截取屏幕并保存为文件", {
         });
     });
 });
+server.tool("get_system_time", "获取当前系统时间信息", {}, // 不需要参数
+async () => {
+    const now = new Date();
+    const systemInfo = {
+        timestamp: now.getTime(),
+        iso8601: now.toISOString(),
+        localTime: now.toLocaleString(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezoneOffset: now.getTimezoneOffset(),
+        osType: os.type(),
+        osPlatform: os.platform(),
+        osRelease: os.release(),
+        hostname: os.hostname(),
+        uptime: os.uptime()
+    };
+    logMessage(`获取系统时间信息: ${systemInfo.localTime}`, "INFO");
+    return {
+        content: [
+            {
+                type: "text",
+                text: JSON.stringify(systemInfo, null, 2)
+            }
+        ]
+    };
+});
 async function main() {
     // 初始化日志系统
     initializeLogging();
@@ -540,11 +571,11 @@ async function main() {
     console.error("准备连接到StdioServerTransport...");
     try {
         await server.connect(transport);
-        console.error("连接到StdioServerTransport成功");
+        console.log("连接到StdioServerTransport成功");
         logMessage("PC MCP Server 已启动，使用stdio通信", "INFO");
         // 记录工具信息以便调试
-        const toolNames = ["get_alerts", "get_forecast", "shutdown_system", "open_browser_search", "capture_screenshot"];
-        console.error("已注册工具:", toolNames.join(", "));
+        const toolNames = ["get_alerts", "get_forecast", "shutdown_system", "open_browser_search", "capture_screenshot", "get_system_time"];
+        console.log(chalk.bold.yellowBright("已注册工具:", toolNames.join(", ")));
         // 确保进程不会退出，保持监听状态
         process.stdin.resume();
         // 添加错误处理
